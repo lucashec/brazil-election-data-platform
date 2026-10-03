@@ -14,7 +14,11 @@
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
-    "docker:clean": "docker compose down -v"
+    "docker:clean": "docker compose down -v",
+    "typeorm": "cd packages/shared && npx typeorm -d dist/database/data-source.js",
+    "migration:generate": "npm run build --workspace=packages/shared && cd packages/shared && npx typeorm migration:generate -d dist/database/data-source.js",
+    "migration:run": "npm run build --workspace=packages/shared && cd packages/shared && npx typeorm migration:run -d dist/database/data-source.js",
+    "migration:revert": "npm run build --workspace=packages/shared && cd packages/shared && npx typeorm migration:revert -d dist/database/data-source.js"
   },
   "engines": {
     "node": ">=20.0.0"
