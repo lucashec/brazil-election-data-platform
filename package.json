@@ -10,7 +10,11 @@
     "build": "npm run build --workspaces --if-present",
     "lint": "eslint 'apps/*/src/**/*.ts' 'packages/*/src/**/*.ts'",
     "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:clean": "docker compose down -v"
   },
   "engines": {
     "node": ">=20.0.0"
