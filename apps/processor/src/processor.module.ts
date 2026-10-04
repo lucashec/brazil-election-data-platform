@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+import { DatabaseModule } from '@election/shared';
 
-@Module({})
+@Module({
+  imports: [DatabaseModule],
+})
 export class ProcessorModule {}
