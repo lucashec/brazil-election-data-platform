@@ -4,6 +4,7 @@ import { DatabaseModule } from '@election/shared';
 import { TseModule } from './tse/tse.module';
 import { SeedModule } from './seed/seed.module';
 import { NormalizerModule } from './normalizer/normalizer.module';
+import { PublisherModule } from './publisher/publisher.module';
 import { CollectorRunnerService } from './collector-runner.service';
 
 @Module({
@@ -13,6 +14,7 @@ import { CollectorRunnerService } from './collector-runner.service';
     TseModule,
     SeedModule,
     NormalizerModule,
+    PublisherModule,
   ],
   providers: [CollectorRunnerService],
 })

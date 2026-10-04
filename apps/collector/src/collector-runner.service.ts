@@ -4,6 +4,7 @@ import { Interval } from '@nestjs/schedule';
 import { NormalizedCollectionResult } from '@election/types';
 import { TseCollectorService } from './tse/tse-collector.service';
 import { NormalizerService } from './normalizer/normalizer.service';
+import { PublisherService } from './publisher/publisher.service';
 
 @Injectable()
 export class CollectorRunnerService implements OnApplicationBootstrap {
@@ -14,6 +15,7 @@ export class CollectorRunnerService implements OnApplicationBootstrap {
   constructor(
     private readonly collector: TseCollectorService,
     private readonly normalizer: NormalizerService,
+    private readonly publisher: PublisherService,
     private readonly config: ConfigService,
   ) {
     this.pollIntervalMs = this.config.get<number>('TSE_POLL_INTERVAL_MS', 0);
@@ -46,12 +48,28 @@ export class CollectorRunnerService implements OnApplicationBootstrap {
     try {
       const collected = await this.collector.collectAll();
       const normalized = this.normalizer.normalizeMany(collected);
+      await this.publishResults(normalized);
       this.logNormalizationSummary(normalized);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.error(`Collection failed: ${message}`);
     } finally {
       this.running = false;
+    }
+  }
+
+  private async publishResults(results: NormalizedCollectionResult[]): Promise<void> {
+    for (const result of results) {
+      await this.publisher.publishResultCollected(result);
+    }
+
+    const totalCandidates = results.reduce((sum, r) => sum + r.candidates.length, 0);
+    if (results.length > 0) {
+      await this.publisher.publishIngestionCompleted(
+        results[0].election.year,
+        results.length,
+        totalCandidates,
+      );
     }
   }
 
