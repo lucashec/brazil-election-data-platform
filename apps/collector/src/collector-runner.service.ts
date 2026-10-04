@@ -1,7 +1,9 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Interval } from '@nestjs/schedule';
+import { NormalizedCollectionResult } from '@election/types';
 import { TseCollectorService } from './tse/tse-collector.service';
+import { NormalizerService } from './normalizer/normalizer.service';
 
 @Injectable()
 export class CollectorRunnerService implements OnApplicationBootstrap {
@@ -11,6 +13,7 @@ export class CollectorRunnerService implements OnApplicationBootstrap {
 
   constructor(
     private readonly collector: TseCollectorService,
+    private readonly normalizer: NormalizerService,
     private readonly config: ConfigService,
   ) {
     this.pollIntervalMs = this.config.get<number>('TSE_POLL_INTERVAL_MS', 0);
@@ -41,13 +44,24 @@ export class CollectorRunnerService implements OnApplicationBootstrap {
 
     this.running = true;
     try {
-      const results = await this.collector.collectAll();
-      this.logger.log(`Collection finished: ${results.length} result sets fetched`);
+      const collected = await this.collector.collectAll();
+      const normalized = this.normalizer.normalizeMany(collected);
+      this.logNormalizationSummary(normalized);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.error(`Collection failed: ${message}`);
     } finally {
       this.running = false;
     }
+  }
+
+  private logNormalizationSummary(results: NormalizedCollectionResult[]): void {
+    const totalCandidates = results.reduce((sum, r) => sum + r.candidates.length, 0);
+    const totalParties = new Set(results.flatMap((r) => r.parties.map((p) => p.number))).size;
+    const totalVotingResults = results.reduce((sum, r) => sum + r.votingResults.length, 0);
+
+    this.logger.log(
+      `Normalized ${results.length} result sets: ${totalCandidates} candidates, ${totalParties} parties, ${totalVotingResults} voting results`,
+    );
   }
 }
